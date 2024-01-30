@@ -1,0 +1,14 @@
+services:
+  api:
+    build: .
+    tty: true
+    volumes:
+      - db:/app/db
+      - .:/app
+    ports:
+      - 4000:4000
+    env_file:
+      - ./.env
+
+volumes:
+  db:

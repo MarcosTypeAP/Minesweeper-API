@@ -1,0 +1,15 @@
+bcrypt>=4.1.2
+cryptography>=41.0.7
+fastapi==0.109.0
+passlib>=1.7.4
+pydantic==2.5.3
+pydantic_core==2.14.6
+python-jose>=3.3.0
+SQLAlchemy==2.0.25
+uvicorn==0.25.0
+python-dotenv==0.19.2
+freezegun==1.4.0
+httpx==0.26.0
+pytest==7.4.4
+libsql-client==0.3.0
+sqlalchemy-libsql==0.1.0
