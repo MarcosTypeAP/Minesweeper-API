@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [[ -f .env ]]; then
-	export $(cat .env)
+	export $(cat .env | grep '^[^#]')
 fi
 
 if test $RUN_TESTS; then

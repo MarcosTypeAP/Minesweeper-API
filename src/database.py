@@ -55,7 +55,7 @@ class DatabaseManager():
     def __new__(cls) -> 'DatabaseManager':
         if not hasattr(cls, 'engine'):
             if settings.DATABASE_ENGINE == 'sqlite':
-                if settings.DEBUG:
+                if settings.DATABASE_LOCAL:
                     cls.engine = create_engine('sqlite+pysqlite:///db/db.dev.sql', connect_args={"check_same_thread": False})
                 else:
                     cls.engine = create_engine(settings.DATABASE_URL, connect_args={"check_same_thread": False})
@@ -67,6 +67,10 @@ class DatabaseManager():
                 raise Exception(f'Database engine not supported: DATABASE_ENGINE={settings.DATABASE_ENGINE}')
 
         return super().__new__(cls)
+
+    def test_connection(self) -> None:
+        with self.engine.connect() as conn:
+            conn.execute(text('SELECT 1;'))
 
     def dispose(self, close: bool = True) -> None:
         if not self.engine:
