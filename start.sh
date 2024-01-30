@@ -25,4 +25,4 @@ if test "$FASTAPI_DEBUG"; then
 	DEBUG_ARGS=--reload
 fi
 
-python3 -m uvicorn main:app $DEBUG_ARGS --port $FASTAPI_PORT --host $FASTAPI_HOST
+python3 -m uvicorn main:app --app-dir src $DEBUG_ARGS --port $FASTAPI_PORT --host $FASTAPI_HOST
