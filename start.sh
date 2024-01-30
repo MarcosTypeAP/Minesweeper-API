@@ -4,12 +4,12 @@ if [[ -f .env ]]; then
 	export $(cat .env)
 fi
 
-if test "$RUN_TESTS"; then
+if test $RUN_TESTS; then
 	python3 -m pytest -p no:cacheprovider --exitfirst || exit 1
 fi
 
 if test -z "$FASTAPI_HOST"; then
-	local CONTAINER_IP=$(ip -4 -o address | grep -m 1 eth | sed -e "s/^[0-9]\+: \+eth[0-9]\+ \+ inet \+//" -e "s/\/.*//")
+	CONTAINER_IP=$(ip -4 -o address | grep -m 1 eth | sed -e "s/^[0-9]\+: \+eth[0-9]\+ \+ inet \+//" -e "s/\/.*//")
 	export FASTAPI_HOST=$CONTAINER_IP
 fi
 
@@ -26,7 +26,7 @@ if test -n "$PORT"; then
 fi
 
 if test "$FASTAPI_DEBUG"; then
-	local DEBUG_ARGS=--reload
+	DEBUG_ARGS=--reload
 fi
 
 python3 -m uvicorn main:app --app-dir src $DEBUG_ARGS --port $FASTAPI_PORT --host $FASTAPI_HOST
