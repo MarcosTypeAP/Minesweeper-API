@@ -57,3 +57,4 @@ def get_engine_name() -> Literal['sqlite', 'postgresql']:
 DATABASE_ENGINE = get_engine_name()
 DATABASE_URL = getvar(str, 'DATABASE_URL')
 DATABASE_LOCAL = getvar(bool, 'DATABASE_LOCAL', default=False)
+DATABASE_CHECK_TABLE = getvar(str, 'DATABASE_CHECK_TABLE', default='')

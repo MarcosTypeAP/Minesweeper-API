@@ -3,6 +3,8 @@ from sqlalchemy import create_engine, text, Row, Connection, Engine, StaticPool
 from sqlalchemy.exc import ResourceClosedError
 from typing import Any, Sequence, Mapping, Annotated, Iterator
 from contextlib import contextmanager
+from utils import print_exception
+import sys
 import settings
 
 
@@ -66,11 +68,24 @@ class DatabaseManager():
             else:
                 raise Exception(f'Database engine not supported: DATABASE_ENGINE={settings.DATABASE_ENGINE}')
 
+        cls.test_database()
+
         return super().__new__(cls)
 
-    def test_connection(self) -> None:
-        with self.engine.connect() as conn:
-            conn.execute(text('SELECT 1;'))
+    @classmethod
+    def test_database(cls) -> None:
+        if not settings.DATABASE_CHECK_TABLE:
+            return
+
+        with cls.engine.connect() as conn:
+            try:
+                conn.execute(text(f'SELECT 1 FROM {settings.DATABASE_CHECK_TABLE};'))
+
+            except Exception as exception:
+                print_exception(exception)
+                conn.rollback()
+                cls.engine.dispose()
+                sys.exit(1)
 
     def dispose(self, close: bool = True) -> None:
         if not self.engine:

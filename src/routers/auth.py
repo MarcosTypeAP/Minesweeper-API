@@ -8,6 +8,7 @@ from jose import jwt, JWTError
 from typing import Annotated, Any, Callable, Coroutine, Literal
 from models import User, FromDBModel, CamelModel
 from database import DBConnectionDep, DBConnection
+from utils import print_exception
 
 import settings
 import datetime
@@ -372,19 +373,8 @@ class RouteErrorHandler(APIRoute):
                 return await original_route_handler(request)
 
             except Exception as exception:
-
                 if settings.DEBUG:
-                    import traceback
-                    traceback.print_tb(exception.__traceback__)
-
-                    print()
-
-                    from pprint import pprint
-                    pprint(exception.args)
-
-                    #  if isinstance(exception, HTTPException):
-                        #  if isinstance(exception, UnauthorizedException):
-                            #  print(exception.reason)
+                    print_exception(exception)
 
                 raise exception
 

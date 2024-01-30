@@ -1,7 +1,10 @@
 #!/bin/bash
 
 if [[ -f .env ]]; then
-	export $(cat .env | grep '^[^#]')
+	IFS=$'\n'
+	for line in $(grep -v '^#' .env); do
+		export $line
+	done
 fi
 
 if test $RUN_TESTS; then
@@ -15,9 +18,9 @@ fi
 
 if test -z "$(echo $FASTAPI_HOST | grep -E '([0-9]+\.){3}[0-9]+')"; then
 	export FASTAPI_HOST=0.0.0.0
-	echo //////////////////////////////////////////////////////
+	echo ////////////////////////////////////////////////////////
 	echo "WARNING: Could not set \$FASTAPI_HOST". Using 0.0.0.0
-	echo //////////////////////////////////////////////////////
+	echo ////////////////////////////////////////////////////////
 fi
 
 # Render deploy
