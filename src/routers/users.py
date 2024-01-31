@@ -16,8 +16,8 @@ class SyncData(CamelModel):
 
 
 class OptionalSyncData(CamelModel):
-    games: list[Game] | None
-    time_records: list[TimeRecord] | None
+    games: list[Game]
+    time_records: list[TimeRecord]
     settings: GameSettings | None
 
 
@@ -73,7 +73,7 @@ def sync_data(user_id: AuthenticatedUserID, sync_data: Annotated[SyncData, Body(
             {'user_id': user_id}
         )
 
-        if rows is None:
+        if not rows:
             save_time_records_(db, user_id, sync_data.time_records)
             has_created = True
 
@@ -114,7 +114,7 @@ def sync_data(user_id: AuthenticatedUserID, sync_data: Annotated[SyncData, Body(
             {'user_id': user_id}
         )
 
-        if rows is None:
+        if not rows:
             save_games_(db, user_id, sync_data.games)
             has_created = True
 
@@ -156,9 +156,9 @@ def sync_data(user_id: AuthenticatedUserID, sync_data: Annotated[SyncData, Body(
     updated_games = get_games_(db, user_id)
 
     if any((
-        updated_time_records is None and sync_data.time_records,
+        not updated_time_records and sync_data.time_records,
         updated_settings is None,
-        updated_games is None and sync_data.games
+        not updated_games and sync_data.games
     )):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail='Data could not be saved.')
 
@@ -177,12 +177,8 @@ def get_sync_data(user_id: AuthenticatedUserID, db: DBConnectionDep) -> Optional
     '''
     Retrieve the latest data.
     '''
-    updated_time_records: list[TimeRecord] | None = get_time_records_(db, user_id)
-    updated_settings: GameSettings | None = get_game_settings_(db, user_id)
-    updated_games: list[Game] | None = get_games_(db, user_id)
-
     return OptionalSyncData(
-        time_records=updated_time_records,
-        settings=updated_settings,
-        games=updated_games
+        time_records=get_time_records_(db, user_id),
+        settings=get_game_settings_(db, user_id),
+        games=get_games_(db, user_id)
     )

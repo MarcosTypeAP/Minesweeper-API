@@ -37,7 +37,9 @@ def test_get_games(client: TestClient, user: TestUser, db: DBConnection) -> None
 
     with authenticate_requests(user):
         res = client.get(GAMES_URL)
-        assert res.status_code == 404
+        assert res.status_code == 200
+
+    assert res.json() == []
 
     games = create_games(db, user)
 
@@ -78,8 +80,7 @@ def test_delete_games(client: TestClient, user: TestUser, db: DBConnection) -> N
         'WHERE user_id = :user_id;',
         {'user_id': user.id}
     )
-
-    assert rows is not None
+    assert rows
 
     for row in rows:
         assert row.difficulty != games[0]
@@ -131,6 +132,6 @@ def test_update_games(client: TestClient, user: TestUser, db: DBConnection) -> N
         'WHERE user_id = :user_id AND difficulty = :difficulty;',
         {'user_id': user.id, 'difficulty': games[0].difficulty}
     )
-
     assert row is not None
+
     assert row.created_at == games[0].created_at

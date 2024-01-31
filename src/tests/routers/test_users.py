@@ -44,8 +44,8 @@ def test_get_sync_data(client: TestClient, user: TestUser, db: DBConnection) -> 
     body = res.json()
 
     assert body == {
-        'games': None,
-        'timeRecords': None,
+        'games': [],
+        'timeRecords': [],
         'settings': None
     }
 
@@ -59,7 +59,7 @@ def test_get_sync_data(client: TestClient, user: TestUser, db: DBConnection) -> 
 
     assert body == {
         'games': model2camel(games),
-        'timeRecords': None,
+        'timeRecords': [],
         'settings': None
     }
 

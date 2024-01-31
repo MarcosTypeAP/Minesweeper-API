@@ -38,7 +38,7 @@ def update_game(db: DBConnection, game_id: int, game: Game) -> None:
     )
 
 
-def get_games_(db: DBConnection, user_id: int) -> list[Game] | None:
+def get_games_(db: DBConnection, user_id: int) -> list[Game]:
     rows = db.fetch_many(
         'SELECT difficulty, encoded_game, created_at '
         'FROM games '
@@ -46,16 +46,12 @@ def get_games_(db: DBConnection, user_id: int) -> list[Game] | None:
         {'user_id': user_id}
     )
 
-    if not rows:
-        return None
-
     return [
         Game.model_validate(row)
         for row in rows
     ]
 
 
-not_found_exception = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No saved games found.')
 there_is_newer_version_exception = HTTPException(status_code=status.HTTP_409_CONFLICT, detail='There is a newer version.')
 
 router = APIRouter(tags=['Games'])
@@ -99,11 +95,6 @@ def delete_game(user_id: AuthenticatedUserID, difficulty: Annotated[int, Path()]
     )
 
 
-@router.get('/', response_model=list[Game], responses={status.HTTP_404_NOT_FOUND: get_json_error_resonse()})
+@router.get('/', response_model=list[Game])
 def get_games(user_id: AuthenticatedUserID, db: DBConnectionDep) -> list[Game]:
-    games = get_games_(db, user_id)
-
-    if games is None:
-        raise not_found_exception
-
-    return games
+    return get_games_(db, user_id)

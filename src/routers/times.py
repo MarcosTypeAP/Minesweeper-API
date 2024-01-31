@@ -30,7 +30,7 @@ def save_time_records_(db: DBConnection, user_id: int, time_records: TimeRecord 
     )
 
 
-def get_time_records_(db: DBConnection, user_id: int) -> list[TimeRecord] | None:
+def get_time_records_(db: DBConnection, user_id: int) -> list[TimeRecord]:
     rows = db.fetch_many(
         'SELECT id, difficulty, time, created_at '
         'FROM time_records '
@@ -38,16 +38,12 @@ def get_time_records_(db: DBConnection, user_id: int) -> list[TimeRecord] | None
         {'user_id': user_id}
     )
 
-    if not rows:
-        return None
-
     return [
         TimeRecord.model_validate(row)
         for row in rows
     ]
 
 
-not_found_exception = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No saved records found.')
 id_already_exists_exception = HTTPException(status_code=status.HTTP_409_CONFLICT, detail='A TimeRecord with that ID already exists.')
 
 router = APIRouter(tags=['Time Records'])
@@ -83,11 +79,6 @@ def delete_time_record(user_id: AuthenticatedUserID, record_id: Annotated[str, P
     )
 
 
-@router.get('/', response_model=list[TimeRecord], responses={status.HTTP_404_NOT_FOUND: get_json_error_resonse()})
+@router.get('/', response_model=list[TimeRecord])
 def get_time_records(user_id: AuthenticatedUserID, db: DBConnectionDep) -> list[TimeRecord]:
-    time_records = get_time_records_(db, user_id)
-
-    if time_records is None:
-        raise not_found_exception
-
-    return time_records
+    return get_time_records_(db, user_id)

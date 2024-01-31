@@ -499,7 +499,7 @@ def generate_test_account(db: DBConnectionDep) -> Credentials:
         'WHERE username LIKE "#testaccount%";'
     )
 
-    if rows is not None:
+    if rows:
         numbers_pattern = re.compile(r'\d+')
         new_test_number = max((
             int(number.group())

@@ -50,7 +50,7 @@ def test_delete_time_records(client: TestClient, user: TestUser, db: DBConnectio
         'WHERE user_id = :user_id AND id = :record_id;',
         {'user_id': user.id, 'record_id': records[0].id}
     )
-    assert rows is not None
+    assert rows
 
     with authenticate_requests(user):
         res = client.delete(TIMES_URL + f'/{records[0].id}')
@@ -62,7 +62,7 @@ def test_delete_time_records(client: TestClient, user: TestUser, db: DBConnectio
         'WHERE user_id = :user_id AND id = :record_id;',
         {'user_id': user.id, 'record_id': records[0].id}
     )
-    assert rows is None
+    assert not rows
 
 
 def test_get_time_records(client: TestClient, user: TestUser, db: DBConnection) -> None:
@@ -70,7 +70,9 @@ def test_get_time_records(client: TestClient, user: TestUser, db: DBConnection) 
 
     with authenticate_requests(user):
         res = client.get(TIMES_URL)
-        assert res.status_code == 404
+        assert res.status_code == 200
+
+    assert res.json() == [] 
 
     records = create_time_records(db, user)
 
