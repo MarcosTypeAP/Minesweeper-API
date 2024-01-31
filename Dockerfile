@@ -19,7 +19,6 @@ COPY --chown=nonroot:nonroot . .
 
 RUN chmod u+x ./start.sh
 
-VOLUME /app/db
 RUN mkdir -p ./db && touch ./db/db.dev.sql && chmod u+w ./db/db.dev.sql
 
 CMD ["./start.sh"]
