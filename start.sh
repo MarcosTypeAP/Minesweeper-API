@@ -18,12 +18,12 @@ fi
 
 if test -z "$(echo $FASTAPI_HOST | grep -E '([0-9]+\.){3}[0-9]+')"; then
 	export FASTAPI_HOST=0.0.0.0
-	echo ////////////////////////////////////////////////////////
-	echo "WARNING: Could not set \$FASTAPI_HOST". Using 0.0.0.0
-	echo ////////////////////////////////////////////////////////
+	echo "////////////////////////////////////////////////////"
+	echo "WARNING: Could not set \$FASTAPI_HOST. Using 0.0.0.0"
+	echo "////////////////////////////////////////////////////"
 fi
 
-# Render deploy
+# Deploy service
 if test -n "$PORT"; then
 	export FASTAPI_PORT=$PORT
 fi
