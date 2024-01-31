@@ -19,27 +19,17 @@ class DBConnection:
         result = self.connection.execute(text(statement), parameters)
 
         try:
-            row = result.first()
+            return result.first()
         except ResourceClosedError:
             return None
 
-        if not row:
-            return None
-
-        return row
-
-    def fetch_many(self, statement: str, parameters: QueryParameter | Sequence[QueryParameter] | None = None) -> Sequence[Row[Any]] | None:
+    def fetch_many(self, statement: str, parameters: QueryParameter | Sequence[QueryParameter] | None = None) -> Sequence[Row[Any]]:
         result = self.connection.execute(text(statement), parameters)
 
         try:
-            row = result.all()
+            return result.all()
         except ResourceClosedError:
-            return None
-
-        if not row:
-            return None
-
-        return row
+            return []
 
     def execute(self, statement: str, parameters: QueryParameter | Sequence[QueryParameter] | None = None) -> None:
         self.connection.execute(text(statement), parameters)
