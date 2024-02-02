@@ -4,12 +4,15 @@ from pprint import pprint
 
 
 def get_json_error_resonse(name: str | None = None, example: dict[str, Any] | None = None):
+    if example is None:
+        example = {
+            'detail': 'string'
+        }
+
     return {
         'content': {
-            'application/json': example if example is not None else {
-                'example': {
-                    'detail': 'string'
-                }
+            'application/json': {
+                'example': example
             }
         },
         'description': name
