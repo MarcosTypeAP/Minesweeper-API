@@ -32,19 +32,16 @@ app.include_router(routers.games, prefix='/api/games')
 app.include_router(routers.times, prefix='/api/timerecords')
 app.include_router(routers.game_settings, prefix='/api/settings')
 
-origins = [
-    '{http}://{host}:{port}'.format(
-        http='https' if settings.CLIENT_HTTPS else 'http',
-        host=settings.CLIENT_HOST,
-        port=settings.CLIENT_PORT,
-    )
-]
+origins: list[str] = []
+
+if settings.CLIENT_URL:
+    origins.append(settings.CLIENT_URL)
 
 if settings.DEBUG:
     origins += [
-        'http://%s:%d' % (settings.HOST, settings.CLIENT_PORT),
-        'http://localhost:%d' % settings.CLIENT_PORT,
-        'http://127.0.0.1:%d' % settings.CLIENT_PORT,
+        settings.CLIENT_DEBUG_URL,
+        'http://127.0.0.1:3000',
+        'http://localhost:3000',
     ]
 
 app.add_middleware(

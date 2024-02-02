@@ -28,9 +28,8 @@ DEBUG: bool = getvar(bool, 'FASTAPI_DEBUG', default=False)
 HOST = getvar(str, 'FASTAPI_HOST', default='0.0.0.0')
 PORT = getvar(int, 'FASTAPI_PORT', default=4000)
 
-CLIENT_HOST = getvar(str, 'CLIENT_HOST', default='127.0.0.1')
-CLIENT_PORT = getvar(int, 'CLIENT_PORT', default=3000)
-CLIENT_HTTPS = getvar(bool, 'CLIENT_HTTPS', default=True)
+CLIENT_URL = getvar(str, 'CLIENT_URL', default='')
+CLIENT_DEBUG_URL = getvar(str, 'CLIENT_DEBUG_URL', default='http://127.0.0.1:3000')
 
 STATIC_URL = '/static'
 STATIC_DIR = os.path.join(APP_DIR, '/static')
