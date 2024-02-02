@@ -132,7 +132,7 @@ def test_generate_tokens(user: TestUser, db: DBConnection) -> None:
     assert tokens1 is not None
     tokens2, _ = generate_tokens_(db, user.id)
     assert tokens2 is not None
-    
+
     tokens1, _ = generate_tokens_(db, user.id, tokens1.device_id)
     assert tokens1 is not None
 
@@ -371,6 +371,54 @@ def test_logout(client: TestClient, user: TestUser, fake_tokens: Tokens, db: DBC
     assert tokens is not None
 
     res = client.post(LOGOUT_URL, json={'refreshToken': tokens.refresh_token})
+    assert res.status_code == 204
+
+    tokens, _ = refresh_tokens_(db, tokens.refresh_token)
+    assert tokens is None
+
+
+@change_password_context
+def test_logout_device_id(client: TestClient, user: TestUser, db: DBConnection) -> None:
+    res = client.post(LOGOUT_URL + '/id')
+    assert res.status_code == 422
+
+    res = client.post(LOGOUT_URL + '/69420')
+    assert res.status_code == 422
+
+    tokens, _ = generate_tokens_(db, user.id)
+    assert tokens is not None
+
+    claims = decode_token(tokens.refresh_token)
+    assert claims is not None
+
+    url = LOGOUT_URL + f'/{claims["device_id"]}'
+
+    credentials = {'username': 'InvalidUsername', 'password': 'InvalidPassword1'}
+
+    res = client.post(url, json=credentials)
+    assert res.status_code == 401
+
+    credentials['username'] = user.username
+
+    res = client.post(url, json=credentials)
+    assert res.status_code == 401
+
+    credentials['password'] = user.password
+
+    res = client.post(url, json=credentials)
+    assert res.status_code == 204
+
+    row = db.fetch_one(
+        'SELECT is_invalidated '
+        'FROM auth '
+        'WHERE user_id = :user_id AND device_id = :device_id;',
+        {'user_id': user.id, 'device_id': claims['device_id']}
+    )
+    assert row is not None
+
+    assert row.is_invalidated
+
+    res = client.post(url, json=credentials)
     assert res.status_code == 204
 
     tokens, _ = refresh_tokens_(db, tokens.refresh_token)

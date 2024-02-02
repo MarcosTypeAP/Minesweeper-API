@@ -1,15 +1,14 @@
-from fastapi import APIRouter, Body, HTTPException, status, Depends, Query, Request, Response
+from fastapi import APIRouter, Body, HTTPException, status, Depends, Query, Request, Response, Path
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.routing import APIRoute
-from pydantic import field_validator, Field, ValidationError, ConfigDict
+from pydantic import field_validator, Field, ValidationError
 from passlib.context import CryptContext
 from passlib.pwd import genword  # type: ignore
 from jose import jwt, JWTError
 from typing import Annotated, Any, Callable, Coroutine, Literal
 from models import User, FromDBModel, CamelModel
 from database import DBConnectionDep, DBConnection
-from utils import print_exception
-
+from utils import print_exception, get_json_error_resonse
 import settings
 import datetime
 import re
@@ -383,10 +382,20 @@ class RouteErrorHandler(APIRoute):
 
 AuthenticatedUserID = Annotated[int, Depends(authenticate_user)]
 
+username_in_use_exception = HTTPException(
+    status_code=status.HTTP_409_CONFLICT,
+    detail={
+        'msg': 'Username already in use.',
+        'username_in_use': True
+    }
+)
+
 router = APIRouter(tags=['Authentication'], route_class=RouteErrorHandler)
 
 
-@router.post('/signup', response_model=User, status_code=status.HTTP_201_CREATED)
+@router.post('/signup', response_model=User, status_code=status.HTTP_201_CREATED, responses={
+    status.HTTP_409_CONFLICT: get_json_error_resonse(example={'detail': username_in_use_exception.detail})
+})
 def register_user(credentials: Annotated[SignUpCredentials, Body()], db: DBConnectionDep) -> User:
     row = db.fetch_one(
         'SELECT id '
@@ -396,13 +405,7 @@ def register_user(credentials: Annotated[SignUpCredentials, Body()], db: DBConne
     )
 
     if row is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail={
-                'msg': 'Username already in use.',
-                'username_in_use': True
-            }
-        )
+        raise username_in_use_exception
 
     user = {
         "username": credentials.username,
@@ -482,6 +485,27 @@ def logout(decoded_refresh_token: AuthenticatedRefreshToken, db: DBConnectionDep
         'SET is_invalidated = TRUE '
         'WHERE user_id = :user_id AND device_id = :device_id;',
         {'user_id': int(decoded_refresh_token.claims.sub), 'device_id': decoded_refresh_token.claims.device_id},
+    )
+
+
+@router.post('/logout/{device_id}', status_code=status.HTTP_204_NO_CONTENT)
+def logout_device(credentials: Annotated[Credentials, Body()], device_id: Annotated[int, Path()], db: DBConnectionDep) -> None:
+    '''
+    Invalidate a session (device id) with credentials. Specially used for logout test accounts.
+    '''
+    db_user = get_db_user(db, credentials.username)
+
+    if db_user is None:
+        raise UnauthorizedException('Could not get user from DB.')
+
+    if not password_context.verify(credentials.password, db_user.password_hash):
+        raise UnauthorizedException('Passwords do not match.')
+
+    db.execute(
+        'UPDATE auth '
+        'SET is_invalidated = TRUE '
+        'WHERE user_id = :user_id AND device_id = :device_id;',
+        {'user_id': db_user.id, 'device_id': device_id},
     )
 
 
