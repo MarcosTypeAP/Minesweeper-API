@@ -4,8 +4,9 @@ from sqlalchemy.exc import ResourceClosedError, DatabaseError
 from typing import Any, Sequence, Mapping, Annotated, Iterator
 from contextlib import contextmanager
 from utils import print_exception
-import sys
 import settings
+import signal
+import os
 
 
 QueryParameter = Mapping[str, Any]
@@ -75,7 +76,7 @@ class DatabaseManager():
                 print_exception(exception)
                 conn.rollback()
                 cls.engine.dispose()
-                sys.exit(1)
+                os.kill(os.getppid(), signal.SIGTERM)  # Aim uvicorn process
 
     def dispose(self, close: bool = True) -> None:
         if not self.engine:
