@@ -1,6 +1,6 @@
 from fastapi import Depends
 from sqlalchemy import create_engine, text, Row, Connection, Engine, StaticPool
-from sqlalchemy.exc import ResourceClosedError
+from sqlalchemy.exc import ResourceClosedError, DatabaseError
 from typing import Any, Sequence, Mapping, Annotated, Iterator
 from contextlib import contextmanager
 from utils import print_exception
@@ -88,8 +88,18 @@ class DatabaseManager():
         if not self.engine:
             raise Exception('Database not initialized.')
 
-        with self.engine.begin() as conn:
-            yield self.connection_class(conn)
+        try:
+            with self.engine.begin() as conn:
+                yield self.connection_class(conn)
+
+        except DatabaseError as exception:
+            for arg in exception.args:
+                print(arg)
+
+            print('Reconnecting.')
+
+            with database_manager.connect() as conn:
+                yield conn
 
 
 #  class TestDBConnection(DBConnection):
