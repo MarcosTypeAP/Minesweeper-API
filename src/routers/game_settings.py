@@ -65,7 +65,7 @@ there_is_newer_version_exception = HTTPException(status_code=status.HTTP_409_CON
 router = APIRouter(tags=['Game Settings'])
 
 
-@router.put('/', response_model=GameSettings, responses={status.HTTP_409_CONFLICT: get_json_error_resonse('Already a Newer Version')})
+@router.put('', response_model=GameSettings, responses={status.HTTP_409_CONFLICT: get_json_error_resonse('Already a Newer Version')})
 def save_settings(user_id: AuthenticatedUserID, game_settings: Annotated[GameSettings, Body()], response: Response, db: DBConnectionDep) -> GameSettings:
     '''
     Save or update the settings if the provided data has been modified more recently than the existing record.
@@ -94,7 +94,7 @@ def save_settings(user_id: AuthenticatedUserID, game_settings: Annotated[GameSet
     return game_settings
 
 
-@router.get('/', response_model=GameSettings, responses={status.HTTP_404_NOT_FOUND: get_json_error_resonse()})
+@router.get('', response_model=GameSettings, responses={status.HTTP_404_NOT_FOUND: get_json_error_resonse()})
 def get_game_settings(user_id: AuthenticatedUserID, db: DBConnectionDep) -> GameSettings:
     game_settings = get_game_settings_(db, user_id)
 

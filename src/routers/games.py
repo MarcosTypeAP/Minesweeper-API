@@ -57,7 +57,7 @@ there_is_newer_version_exception = HTTPException(status_code=status.HTTP_409_CON
 router = APIRouter(tags=['Games'])
 
 
-@router.put('/', response_model=Game, responses={status.HTTP_409_CONFLICT: get_json_error_resonse('Already a Newer Version')})
+@router.put('', response_model=Game, responses={status.HTTP_409_CONFLICT: get_json_error_resonse('Already a Newer Version')})
 def save_game(user_id: AuthenticatedUserID, game: Annotated[Game, Body()], response: Response, db: DBConnectionDep) -> Game:
     '''
     Save or update the data if the provided game is more recent than the existing record.
@@ -95,6 +95,6 @@ def delete_game(user_id: AuthenticatedUserID, difficulty: Annotated[int, Path()]
     )
 
 
-@router.get('/', response_model=list[Game])
+@router.get('', response_model=list[Game])
 def get_games(user_id: AuthenticatedUserID, db: DBConnectionDep) -> list[Game]:
     return get_games_(db, user_id)

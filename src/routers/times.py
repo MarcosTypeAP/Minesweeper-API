@@ -49,7 +49,7 @@ id_already_exists_exception = HTTPException(status_code=status.HTTP_409_CONFLICT
 router = APIRouter(tags=['Time Records'])
 
 
-@router.post('/', response_model=TimeRecord, status_code=status.HTTP_201_CREATED, responses={
+@router.post('', response_model=TimeRecord, status_code=status.HTTP_201_CREATED, responses={
     status.HTTP_409_CONFLICT: get_json_error_resonse('ID already exists')
 })
 def save_time_record(user_id: AuthenticatedUserID, time_record: Annotated[TimeRecord, Body()], db: DBConnectionDep) -> TimeRecord:
@@ -79,6 +79,6 @@ def delete_time_record(user_id: AuthenticatedUserID, record_id: Annotated[str, P
     )
 
 
-@router.get('/', response_model=list[TimeRecord])
+@router.get('', response_model=list[TimeRecord])
 def get_time_records(user_id: AuthenticatedUserID, db: DBConnectionDep) -> list[TimeRecord]:
     return get_time_records_(db, user_id)

@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import AsyncIterator
 from contextlib import asynccontextmanager
 from database import database_manager
-from utils import get_json_error_resonse
 import routers
 import settings
 
