@@ -4,12 +4,16 @@ from sqlalchemy.exc import ResourceClosedError, DatabaseError
 from typing import Any, Sequence, Mapping, Annotated, Iterator
 from contextlib import contextmanager
 from utils import print_exception
+from datetime import datetime, timedelta
 import settings
 import signal
 import os
 
 
 QueryParameter = Mapping[str, Any]
+
+
+TIME_BETWEEN_CONNECTION_CHECKS = timedelta(minutes=5).total_seconds()
 
 
 class DBConnection:
@@ -44,6 +48,7 @@ class DBConnection:
 
 class DatabaseManager():
     connection_class = DBConnection
+    last_connection_check_time = 0.0
 
     def __new__(cls) -> 'DatabaseManager':
         if not hasattr(cls, 'engine'):
@@ -65,6 +70,9 @@ class DatabaseManager():
 
     @classmethod
     def test_database(cls) -> None:
+        if not cls.engine:
+            raise Exception('Database not initialized.')
+
         if not settings.DATABASE_CHECK_TABLE:
             return
 
@@ -78,6 +86,24 @@ class DatabaseManager():
                 cls.engine.dispose()
                 os.kill(os.getppid(), signal.SIGTERM)  # Aim uvicorn process
 
+    @classmethod
+    def _check_engine_connection(cls) -> None:
+        if not cls.engine:
+            raise Exception('Database not initialized.')
+
+        try:
+            with cls.engine.connect() as conn:
+                conn.execute(text('SELECT 1;'))
+
+        except DatabaseError as exception:
+            print('DatabaseError when checking connection. Recreating engine.')
+
+            if settings.DEBUG:
+                print_exception(exception)
+
+            del cls.engine
+            cls.__new__(cls)
+
     def dispose(self, close: bool = True) -> None:
         if not self.engine:
             raise Exception('Database not initialized.')
@@ -89,18 +115,14 @@ class DatabaseManager():
         if not self.engine:
             raise Exception('Database not initialized.')
 
-        try:
-            with self.engine.begin() as conn:
-                yield self.connection_class(conn)
+        now = datetime.utcnow().timestamp()
 
-        except DatabaseError as exception:
-            for arg in exception.args:
-                print(arg)
+        if self.last_connection_check_time + TIME_BETWEEN_CONNECTION_CHECKS < now:
+            self._check_engine_connection()
+            self.last_connection_check_time = now
 
-            print('Reconnecting.')
-
-            with database_manager.connect() as conn:
-                yield conn
+        with self.engine.begin() as conn:
+            yield self.connection_class(conn)
 
 
 #  class TestDBConnection(DBConnection):
