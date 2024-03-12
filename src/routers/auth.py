@@ -513,7 +513,6 @@ def logout_device(credentials: Annotated[Credentials, Body()], device_id: Annota
 def generate_test_account(db: DBConnectionDep) -> Credentials:
     '''
     Generates a new test user for accessing protected endpoints without the need for signup.
-    Note that logging in to this account is not supported and the account remains valid as long as the refresh token has not expired.
     '''
     new_test_number = 0
 

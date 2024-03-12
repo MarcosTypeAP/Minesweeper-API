@@ -7,14 +7,6 @@ import routers
 import settings
 
 
-tags_metadata = [
-    {
-        'name': 'Authentication',
-        'description': 'This endpoints provide secure access management, supporting token generation, rotation for enhanced security, and families for organized session control.'
-    }
-]
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     yield
@@ -23,7 +15,31 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         database_manager.dispose()
 
 
-app = FastAPI(lifespan=lifespan, openapi_tags=tags_metadata)
+tags_metadata = [
+    {
+        'name': 'Authentication',
+        'description': (
+            'This endpoints provide secure access management, '
+            'supporting token generation, rotation for enhanced security, '
+            'and families for organized session control.'
+        )
+    }
+]
+
+description = (
+    'This API extends the functionality of the [Minesweeper client]'
+    '(https://github.com/MarcosTypeAP/Minesweeper-Client/tree/main), '
+    'providing additional features such as saving unfinished games, '
+    'time records, and customized settings so you can sync them across '
+    'multiple devices.'
+)
+
+app = FastAPI(
+    title='Minesweeper API',
+    description=description,
+    lifespan=lifespan,
+    openapi_tags=tags_metadata
+)
 
 app.include_router(routers.auth, prefix='/api/auth')
 app.include_router(routers.users, prefix='/api/users')
