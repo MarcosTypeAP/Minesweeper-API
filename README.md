@@ -17,7 +17,7 @@ git clone git@github.com:MarcosTypeAP/Minesweeper-API.git
 cd Minesweeper-API
 ```
 
-You need to set the environment variables found in `./env_vars` to a `.env` file.
+You need to set the following environment variables to a `.env` file.
 
 | Name | Info | Required | Example |
 |---|---|---|---|
