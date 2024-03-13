@@ -6,7 +6,7 @@ services:
       - db:/app/db
       - .:/app
     ports:
-      - 4000:4000
+      - ${FASTAPI_PORT:-4000}:${FASTAPI_PORT:-4000}
     env_file:
       - ./.env
 

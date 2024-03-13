@@ -17,7 +17,7 @@ git clone git@github.com:MarcosTypeAP/Minesweeper-API.git
 cd Minesweeper-API
 ```
 
-You need to set the following environment variables to a `.env` file.
+You need to set the environment variables found in `./env_vars` to a `.env` file.
 
 | Name | Info | Required | Example |
 |---|---|---|---|
@@ -28,11 +28,10 @@ You need to set the following environment variables to a `.env` file.
 | CLIENT_URL | Used for CORS | False | `https://example.client` |
 | CLIENT_DEBUG_URL | Used for CORS | False | `http://localhost:3000` |
 | FASTAPI_DEBUG | Used for CORS and debug level logging | False | `0` |
+| FASTAPI_HOST | If not set, it tries to use the container IP, otherwise, it defaults to `0.0.0.0` | False | `127.0.0.1` |
+| FASTAPI_PORT | This is overwritten by `$PORT` if it is set, usualy set by the docker host | False | `4000` |
 | RUN_TESTS | Whether to run the entire test suite at startup | False | `1` |
 | DATABASE_ENGINE | The used engine. Must be `sqlite` or `postgresql` | True | `sqlite` |
 | DATABASE_URL | Used to create the database engine | True | `sqlite+pysqlite:///:memory:` |
 | DATABASE_LOCAL | Whether use a local database | False | `0` |
-| DATABASE_CHECK_TABLE | The API will check that the specified table exists on startup or shutdown if it does not | False | `users` |
-
-
-
+| DATABASE_CHECK_TABLE | The API will check that the specified table exists on startup or stop the process if it does not | False | `users` |
