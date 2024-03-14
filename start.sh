@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [[ -f .env ]]; then
 	IFS=$'\n'
@@ -7,14 +7,14 @@ if [[ -f .env ]]; then
 	done
 fi
 
-if test $RUN_TESTS; then
+if [[ $RUN_TESTS -ne 0 ]]; then
 	python3 -m pytest -p no:cacheprovider --exitfirst || exit 1
 fi
 
-if test -z "$FASTAPI_HOST"; then
+if [[ -z $FASTAPI_HOST ]]; then
 	CONTAINER_IP=$(ip -4 -o address | grep -m 1 eth | sed -e "s/^[0-9]\+: \+eth[0-9]\+ \+ inet \+//" -e "s/\/.*//")
 
-    if test -z "$(echo $CONTAINER_IP | grep -E '([0-9]+\.){3}[0-9]+')"; then
+    if [[ -z $(echo $CONTAINER_IP | grep -E '([0-9]+\.){3}[0-9]+') ]]; then
         export FASTAPI_HOST=0.0.0.0
         echo "////////////////////////////////////////////////////////////"
         echo "WARNING: Could not set \$FASTAPI_HOST. Using $FASTAPI_HOST"
@@ -25,18 +25,18 @@ if test -z "$FASTAPI_HOST"; then
 fi
 
 # Deploy service
-if test -n "$PORT"; then
+if [[ -n $PORT ]]; then
 	export FASTAPI_PORT=$PORT
 fi
 
-if test -z "$FASTAPI_PORT"; then
+if [[ -z $FASTAPI_PORT ]]; then
 	export FASTAPI_PORT=4000
     echo "////////////////////////////////////////////////////////////"
-    echo "WARNING: Could not set \$FASTAPI_PORT. Using $FASTAPI_PORT"
+    echo "WARNING: \$FASTAPI_PORT not set. Using $FASTAPI_PORT"
     echo "////////////////////////////////////////////////////////////"
 fi
 
-if test "$FASTAPI_DEBUG"; then
+if [[ $FASTAPI_DEBUG -ne 0 ]]; then
 	DEBUG_ARGS=--reload
 fi
 
