@@ -1,7 +1,6 @@
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
-	id INTEGER NOT NULL, -- sqlite
-	id SERIAL NOT NULL, -- postgresql
+	id INTEGER NOT NULL,
 	username CHAR(20) NOT NULL UNIQUE,
 	password_hash CHAR(100) NOT NULL,
 	PRIMARY KEY (id)
@@ -9,8 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Auth table
 CREATE TABLE IF NOT EXISTS auth (
-	id INTEGER NOT NULL, -- sqlite
-	id SERIAL NOT NULL, -- postgresql
+	id INTEGER NOT NULL,
 	user_id INTEGER NOT NULL,
 	device_id INTEGER NOT NULL,
 	token_id INTEGER NOT NULL,
@@ -22,8 +20,7 @@ CREATE TABLE IF NOT EXISTS auth (
 
 -- Game settings table
 CREATE TABLE IF NOT EXISTS game_settings (
-	id INTEGER NOT NULL, -- sqlite
-	id SERIAL NOT NULL, -- postgresql
+	id INTEGER NOT NULL,
 	user_id INTEGER NOT NULL,
 	theme INTEGER NOT NULL DEFAULT 0,
 	initial_zoom BOOLEAN NOT NULL DEFAULT FALSE,
@@ -40,8 +37,7 @@ CREATE TABLE IF NOT EXISTS game_settings (
 
 -- Games table
 CREATE TABLE IF NOT EXISTS games (
-	id INTEGER NOT NULL, -- sqlite
-	id SERIAL NOT NULL, -- postgresql
+	id INTEGER NOT NULL,
 	user_id INTEGER NOT NULL,
 	difficulty INTEGER NOT NULL,
 	encoded_game TEXT NOT NULL,

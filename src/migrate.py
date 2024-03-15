@@ -1,149 +1,154 @@
 from sqlalchemy import text, Engine
-from database import get_db_engine
 import settings
 import sys
 import os
 import re
-from typing import Literal
 
 
 MIGRATIONS_DIR = settings.APP_DIR + '/migrations'
 
 
-def get_migration_ids() -> list[int] | None:
-    if len(sys.argv) < 2:
-        print('Missing migration ID.')
-        return None
-
-    if sys.argv[1] in ('--help', '-h'):
-        print('Pass a migration ID or "last" to select the latest migration.')
-        return None
-
+def get_all_migration_ids() -> list[int]:
     if not os.path.exists(MIGRATIONS_DIR):
         print('There is no migrations directory.')
-        return None
+        return []
 
     migration_filenames = os.listdir(MIGRATIONS_DIR)
 
     if not migration_filenames:
         print('There is no migration files.')
-        return None
+        return []
 
-    if sys.argv[1] in ('last', 'all'):
-        migration_ids = [
-            int(first_digit)
-            for filename in migration_filenames
-            if filename and (first_digit := filename[0]).isnumeric()
-        ]
+    migration_ids = [
+        int(id)
+        for filename in migration_filenames
+        if (id := filename.split('-')[0]).isnumeric()
+    ]
 
-        if not migration_ids:
-            print('There is no valid migration files. They must start with its ID. Eg: 0-migration-name.sql')
-            return None
+    if not migration_ids:
+        print('There is no valid migration files. They must start with its ID. Eg: 0-migration-name.sql')
+        return []
 
-        if sys.argv[1] == 'all':
-            return migration_ids
-
-        return [max(migration_ids)]
-
-    if not sys.argv[1].isnumeric():
-        print('Migration ID must be a positive integer.')
-        return None
-
-    return [int(sys.argv[1])]
+    return migration_ids
 
 
-def parse_sql_file(file: str, engine: Literal['sqlite', 'postgresql']) -> list[str]:
+def get_migration_ids() -> list[int]:
+    if len(sys.argv) < 2:
+        print('Missing args. Pass -h for help.')
+        return []
+
+    arg = sys.argv[1]
+
+    if arg in ('--help', '-h'):
+        print('Pass a single migration ID or a [start, end] range. Eg: 2-4 to select 2,3,4')
+        print('Pass "last" to select the latest migration.')
+        print('Pass "all" to select all migrations.')
+        return []
+
+    if arg == 'last':
+        return [get_all_migration_ids()[-1]]
+
+    if arg == 'all':
+        return get_all_migration_ids()
+
+    if arg.isnumeric():
+        return [int(arg)]
+
+    if '-' not in arg:
+        print('Invalid arg. Pass -h for help.')
+        return []
+
+    start, end = arg.split('-', 1)
+
+    if not start.isnumeric() or not end.isnumeric():
+        print('The start and end of the range must be positive integers. Eg: 0-7')
+        return []
+
+    return list(range(int(start), int(end) + 1))
+
+
+def parse_sql_file(file: str) -> list[str]:
+    comment_pattern = re.compile(r'^ *--')
+
     statements: list[str] = []
 
-    comment_line_pattern = re.compile(r'^ *--')
-
     with open(file, 'r') as fp:
-        for sql_statement in fp.read().split(';'):
-            statement_lines: list[str] = []
+        for query in fp.read().split(';'):
+            statement = ''
 
-            for line in sql_statement.splitlines():
-                if comment_line_pattern.match(line):
+            for line in query:
+                if comment_pattern.match(line):
                     continue
 
-                if '--' in line:
-                    statement_part, comment = line.rsplit('--', 1)
+                statement += line
 
-                    if engine == 'sqlite' and 'postgresql' in comment:
-                        continue
-
-                    if engine == 'postgresql' and 'sqlite' in comment:
-                        continue
-
-                    statement_lines.append(statement_part)
-                    continue
-
-                statement_lines.append(line)
-
-            if statement_lines:
-                if len(statement_lines) == 1 and statement_lines[0] == '':
-                    continue
-
-                statements.append('\n'.join(statement_lines) + ';')
+            statements.append(statement)
 
     return statements
 
 
 def run_all_migrations(engine: Engine, echo: bool = True) -> None:
-    migration_filenames = os.listdir(MIGRATIONS_DIR)
-
-    if not migration_filenames:
-        print('There is no migration files.')
-        return None
-
-    migration_ids = [
-        int(first_digit)
-        for filename in migration_filenames
-        if filename and (first_digit := filename[0]).isnumeric()
-    ]
+    migration_ids = get_all_migration_ids()
 
     if not migration_ids:
-        print('There is no valid migration files. They must start with its ID. Eg: 0-migration-name.sql')
         return
 
     run_migrations(migration_ids, engine, echo)
 
 
 def run_migrations(migration_ids: list[int], engine: Engine, echo: bool = True) -> None:
-    migration_filenames = os.listdir(MIGRATIONS_DIR)
+    if not os.path.exists(MIGRATIONS_DIR):
+        print('There is no migrations directory.')
+        return
+
+    ids = {str(id) for id in migration_ids}
+
+    migration_files: list[tuple[int, str]] = [
+        (int(file_id), MIGRATIONS_DIR + '/' + filename)
+        for filename in os.listdir(MIGRATIONS_DIR)
+        if (file_id := filename.split('-', 1)[0]) in ids
+    ]
+
+    if not migration_files:
+        print('There is no migrations with this ids:', migration_ids)
+        return
+
+    if len(migration_files) != len(ids):
+        diff = ids.difference({str(file[0]) for file in migration_files})
+        print('There is no migrations with this ids:', sorted([int(id) for id in diff]))
+        return
+
+    migration_files.sort(key=lambda file: file[0])
 
     init_echo = engine.echo
 
     try:
         engine.echo = echo
 
-        for migration_id in migration_ids:
-            migration_path: str | None = None
+        for file in migration_files:
+            sql_statements = parse_sql_file(file[1])
 
-            for filename in migration_filenames:
-                if filename.startswith(str(migration_id)):
-                    migration_path = MIGRATIONS_DIR + '/' + filename
-                    break
-
-            if migration_path is None:
-                return
-
-            sql_statements = parse_sql_file(migration_path, settings.DATABASE_ENGINE)
-
-            print(f'Applying migration {migration_id}.')
+            print(f'Applying migration {file[0]}.')
 
             with engine.begin() as conn:
                 for statement in sql_statements:
                     conn.execute(text(statement))
+
     finally:
         engine.echo = init_echo  # type: ignore
+
+    return
 
 
 def run() -> None:
     ids = get_migration_ids()
 
-    if ids is None:
+    if not ids:
         return
 
+    settings.DATABASE_CHECK_TABLE = ''
+
+    from database import get_db_engine
     engine = get_db_engine()
 
     run_migrations(ids, engine)

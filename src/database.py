@@ -3,17 +3,19 @@ from sqlalchemy import create_engine, text, Row, Connection, Engine, StaticPool
 from sqlalchemy.exc import ResourceClosedError, DatabaseError
 from typing import Any, Sequence, Mapping, Annotated, Iterator
 from contextlib import contextmanager
+from migrate import run_all_migrations
 from utils import print_exception
 from datetime import datetime, timedelta
 import settings
 import signal
+import time
 import os
 
 
 QueryParameter = Mapping[str, Any]
 
 
-TIME_BETWEEN_CONNECTION_CHECKS = timedelta(minutes=5).total_seconds()
+TIME_BETWEEN_CONNECTION_CHECKS = timedelta(minutes=5)
 
 
 class DBConnection:
@@ -46,50 +48,70 @@ class DBConnection:
         self.connection.rollback()
 
 
-class DatabaseManager():
+class DatabaseManager:
     connection_class = DBConnection
-    last_connection_check_time = 0.0
+    last_connection_check_time = datetime.fromtimestamp(0)
+    connection_check_retries = 5
 
     def __new__(cls) -> 'DatabaseManager':
         if not hasattr(cls, 'engine'):
-            if settings.DATABASE_ENGINE == 'sqlite':
-                if settings.DATABASE_LOCAL:
-                    cls.engine = create_engine('sqlite+pysqlite:///db/db.dev.sql', connect_args={"check_same_thread": False})
-                else:
-                    cls.engine = create_engine(settings.DATABASE_URL, connect_args={"check_same_thread": False})
+            cls.engine = cls._create_engine()
 
-            elif settings.DATABASE_ENGINE == 'postgresql':
-                cls.engine = create_engine(settings.DATABASE_URL)
-
-            else:
-                raise Exception(f'Database engine not supported: DATABASE_ENGINE={settings.DATABASE_ENGINE}')
-
-        cls.test_database()
+        cls._test_database()
 
         return super().__new__(cls)
 
     @classmethod
-    def test_database(cls) -> None:
+    def _create_engine(cls) -> Engine:
+        engine = create_engine(settings.DATABASE_URL, connect_args={'check_same_thread': False})
+
+        url_parts = settings.DATABASE_URL.split('://', 1)[1].split('?', 1)
+        url = url_parts[0]
+        params = ''
+
+        if len(url_parts) == 2:
+            params = url_parts[1]
+
+        if url in ('/', '') or ':memory:' in url or 'mode=memory' in params:
+            print('Using temporary database. Running migrations.')
+            run_all_migrations(engine, echo=False)
+
+        return engine
+
+    @classmethod
+    def _test_database(cls) -> None:
         if not cls.engine:
             raise Exception('Database not initialized.')
+
+        success = cls._check_engine_connection()
+
+        if not success:
+            cls._dispose_and_end_process()
+            return
 
         if not settings.DATABASE_CHECK_TABLE:
             return
 
-        with cls.engine.connect() as conn:
-            try:
+        try:
+            with cls.engine.connect() as conn:
                 conn.execute(text(f'SELECT 1 FROM {settings.DATABASE_CHECK_TABLE};'))
 
-            except Exception as exception:
+        except Exception as exception:
+            print(f'Error: Table `{settings.DATABASE_CHECK_TABLE}` does not exist in the database.')
+
+            if settings.DEBUG:
                 print_exception(exception)
-                conn.rollback()
-                cls.engine.dispose()
-                os.kill(os.getppid(), signal.SIGTERM)  # Aim uvicorn process
+
+            cls._dispose_and_end_process()
 
     @classmethod
-    def _check_engine_connection(cls) -> None:
+    def _check_engine_connection(cls) -> bool:
         if not cls.engine:
             raise Exception('Database not initialized.')
+
+        if cls.connection_check_retries <= 0:
+            print('Error: The maximum number of attempts was reached verifying the database connection.')
+            return False
 
         try:
             with cls.engine.connect() as conn:
@@ -101,8 +123,19 @@ class DatabaseManager():
             if settings.DEBUG:
                 print_exception(exception)
 
-            del cls.engine
-            cls.__new__(cls)
+            time.sleep(0.5)
+            cls.connection_check_retries -= 1
+            cls.engine.dispose()
+            cls.engine = cls._create_engine()
+            return cls._check_engine_connection()
+
+        return True
+
+    @classmethod
+    def _dispose_and_end_process(cls) -> None:
+        cls.engine.dispose()
+        os.kill(os.getppid(), signal.SIGTERM)  # Aim uvicorn process
+        os.kill(os.getpid(), signal.SIGTERM)
 
     def dispose(self, close: bool = True) -> None:
         if not self.engine:
@@ -115,10 +148,15 @@ class DatabaseManager():
         if not self.engine:
             raise Exception('Database not initialized.')
 
-        now = datetime.utcnow().timestamp()
+        now = datetime.now()
 
-        if self.last_connection_check_time + TIME_BETWEEN_CONNECTION_CHECKS < now:
-            self._check_engine_connection()
+        if now > self.last_connection_check_time + TIME_BETWEEN_CONNECTION_CHECKS:
+            success = self._check_engine_connection()
+
+            if not success:
+                self._dispose_and_end_process()
+                return
+
             self.last_connection_check_time = now
 
         with self.engine.begin() as conn:

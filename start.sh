@@ -16,9 +16,7 @@ if [[ -z $FASTAPI_HOST ]]; then
 
     if [[ -z $(echo $CONTAINER_IP | grep -E '([0-9]+\.){3}[0-9]+') ]]; then
         export FASTAPI_HOST=0.0.0.0
-        echo "////////////////////////////////////////////////////////////"
         echo "WARNING: Could not set \$FASTAPI_HOST. Using $FASTAPI_HOST"
-        echo "////////////////////////////////////////////////////////////"
     else
         export FASTAPI_HOST=$CONTAINER_IP
     fi
@@ -31,9 +29,7 @@ fi
 
 if [[ -z $FASTAPI_PORT ]]; then
 	export FASTAPI_PORT=4000
-    echo "////////////////////////////////////////////////////////////"
     echo "WARNING: \$FASTAPI_PORT not set. Using $FASTAPI_PORT"
-    echo "////////////////////////////////////////////////////////////"
 fi
 
 if [[ $FASTAPI_DEBUG -ne 0 ]]; then
