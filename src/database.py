@@ -63,8 +63,6 @@ class DatabaseManager:
 
     @classmethod
     def _create_engine(cls) -> Engine:
-        engine = create_engine(settings.DATABASE_URL, connect_args={'check_same_thread': False})
-
         url_parts = settings.DATABASE_URL.split('://', 1)[1].split('?', 1)
         url = url_parts[0]
         params = ''
@@ -72,7 +70,15 @@ class DatabaseManager:
         if len(url_parts) == 2:
             params = url_parts[1]
 
-        if url in ('/', '') or ':memory:' in url or 'mode=memory' in params:
+        is_tmp_db = url in ('/', '') or ':memory:' in url or 'mode=memory' in params
+
+        engine = create_engine(
+            settings.DATABASE_URL,
+            connect_args={'check_same_thread': False},
+            poolclass=StaticPool if is_tmp_db else None
+        )
+
+        if is_tmp_db:
             print('Using temporary database. Running migrations.')
             run_all_migrations(engine, echo=False)
 
