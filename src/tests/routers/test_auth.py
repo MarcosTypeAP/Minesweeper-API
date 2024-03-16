@@ -13,7 +13,7 @@ from routers.auth import (
 from database import DBConnection
 from freezegun import freeze_time
 from conftest import TestUser
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Callable, Any
 import functools
 import settings
@@ -76,11 +76,11 @@ def test_generate_tokens(user: TestUser, db: DBConnection) -> None:
     assert claims is not None
     refresh_token_claims = RefreshTokenClaims.model_validate(claims)
 
-    access_token_exp = (datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)).timestamp()
+    access_token_exp = (datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)).timestamp()
     assert access_token_claims.exp == access_token_exp
     assert access_token_claims.sub == str(user.id)
 
-    refresh_token_exp = (datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)).timestamp()
+    refresh_token_exp = (datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)).timestamp()
     assert refresh_token_claims.exp == refresh_token_exp
     assert refresh_token_claims.sub == str(user.id)
     assert refresh_token_claims.token_id == 0
@@ -167,11 +167,11 @@ def test_refresh_tokens(user: TestUser, db: DBConnection) -> None:
     assert claims is not None
     refresh_token_claims2 = RefreshTokenClaims.model_validate(claims)
 
-    access_token_exp = (datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)).timestamp()
+    access_token_exp = (datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)).timestamp()
     assert access_token_claims2.exp == access_token_exp
     assert access_token_claims2.sub == str(user.id)
 
-    refresh_token_exp = (datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)).timestamp()
+    refresh_token_exp = (datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)).timestamp()
     assert refresh_token_claims2.exp == refresh_token_exp
     assert refresh_token_claims2.sub == str(user.id)
     assert refresh_token_claims2.token_id == 1

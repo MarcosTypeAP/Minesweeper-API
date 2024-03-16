@@ -10,7 +10,7 @@ from models import User, FromDBModel, CamelModel
 from database import DBConnectionDep, DBConnection
 from utils import print_exception, get_json_error_resonse
 import settings
-import datetime
+from datetime import datetime, timedelta, timezone
 import re
 
 
@@ -201,7 +201,7 @@ def refresh_tokens_(db: DBConnection, refresh_token: str) -> tuple[Tokens | None
     new_access_token = encode_token({
         'sub': str(user_id),
         'type': 'access',
-        'exp': (datetime.datetime.utcnow() + datetime.timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)).timestamp()
+        'exp': (datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)).timestamp()
     })
 
     new_refresh_token = encode_token({
@@ -210,7 +210,7 @@ def refresh_tokens_(db: DBConnection, refresh_token: str) -> tuple[Tokens | None
         'family_id': family_id,
         'device_id': device_id,
         'type': 'refresh',
-        'exp': (datetime.datetime.utcnow() + datetime.timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)).timestamp()
+        'exp': (datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)).timestamp()
     })
 
     if new_access_token is None or new_refresh_token is None:
@@ -260,7 +260,7 @@ def generate_tokens_(db: DBConnection, user_id: int, device_id: int | None = Non
     new_access_token = encode_token({
         'sub': str(user_id),
         'type': 'access',
-        'exp': (datetime.datetime.utcnow() + datetime.timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)).timestamp()
+        'exp': (datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)).timestamp()
     })
 
     new_refresh_token = encode_token({
@@ -269,7 +269,7 @@ def generate_tokens_(db: DBConnection, user_id: int, device_id: int | None = Non
         'family_id': family_id,
         'device_id': device_id,
         'type': 'refresh',
-        'exp': (datetime.datetime.utcnow() + datetime.timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)).timestamp()
+        'exp': (datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)).timestamp()
     })
 
     if new_access_token is None or new_refresh_token is None:

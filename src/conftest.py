@@ -16,7 +16,7 @@ from main import app
 import settings
 
 # Python
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Iterator, Callable, Any, Sequence
 import re
 
@@ -131,7 +131,7 @@ def fake_tokens(user: TestUser) -> Tokens:
         {
             'type': 'access',
             'sub': user.id,
-            'exp': (datetime.utcnow() + timedelta(weeks=999)).timestamp(),
+            'exp': (datetime.now(timezone.utc) + timedelta(weeks=999)).timestamp(),
         },
         key='fake_secret',
         algorithm=settings.JWT_ALGORITHM
@@ -141,7 +141,7 @@ def fake_tokens(user: TestUser) -> Tokens:
         {
             'type': 'refresh',
             'sub': user.id,
-            'exp': (datetime.utcnow() + timedelta(weeks=999)).timestamp(),
+            'exp': (datetime.now(timezone.utc) + timedelta(weeks=999)).timestamp(),
             'token_id': 69,
             'family_id': 420,
             'device_id': 33
