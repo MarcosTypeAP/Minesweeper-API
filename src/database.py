@@ -1,5 +1,6 @@
 from fastapi import Depends
 from sqlalchemy import create_engine, text, Row, Connection, Engine, StaticPool
+from sqlalchemy.engine.url import make_url
 from sqlalchemy.exc import ResourceClosedError, DatabaseError
 from typing import Any, Sequence, Mapping, Annotated, Iterator
 from contextlib import contextmanager
@@ -63,14 +64,13 @@ class DatabaseManager:
 
     @classmethod
     def _create_engine(cls) -> Engine:
-        url_parts = settings.DATABASE_URL.split('://', 1)[1].split('?', 1)
-        url = url_parts[0]
-        params = ''
 
-        if len(url_parts) == 2:
-            params = url_parts[1]
-
-        is_tmp_db = url in ('/', '') or ':memory:' in url or 'mode=memory' in params
+        url_parts = make_url(settings.DATABASE_URL)
+        is_tmp_db = (
+            (not url_parts.database and not url_parts.host) or
+            (':memory:' in (url_parts.database or '')) or
+            (url_parts.query.get('mode') == 'memory')
+        )
 
         engine = create_engine(
             settings.DATABASE_URL,
