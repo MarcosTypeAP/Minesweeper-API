@@ -53,17 +53,21 @@ class DatabaseManager:
     connection_class = DBConnection
     last_connection_check_time = datetime.fromtimestamp(0)
     connection_check_retries = 5
+    engine: Engine | None = None
 
     def __new__(cls) -> 'DatabaseManager':
-        if not hasattr(cls, 'engine'):
+        if cls.engine is None:
             cls.engine = cls._create_engine()
 
-        cls._test_database()
+            if cls.engine is None:
+                cls._dispose_and_end_process()
+            else:
+                cls._test_database()
 
         return super().__new__(cls)
 
     @classmethod
-    def _create_engine(cls) -> Engine:
+    def _create_engine(cls) -> Engine | None:
 
         url_parts = make_url(settings.DATABASE_URL)
         is_tmp_db = (
@@ -71,6 +75,11 @@ class DatabaseManager:
             (':memory:' in (url_parts.database or '')) or
             (url_parts.query.get('mode') == 'memory')
         )
+
+        if not is_tmp_db and url_parts.database is not None:
+            if not os.path.isfile(url_parts.database):
+                print(f'Error: {url_parts.database} does not exist.')
+                return None
 
         engine = create_engine(
             settings.DATABASE_URL,
@@ -86,7 +95,7 @@ class DatabaseManager:
 
     @classmethod
     def _test_database(cls) -> None:
-        if not cls.engine:
+        if cls.engine is None:
             raise Exception('Database not initialized.')
 
         success = cls._check_engine_connection()
@@ -112,7 +121,7 @@ class DatabaseManager:
 
     @classmethod
     def _check_engine_connection(cls) -> bool:
-        if not cls.engine:
+        if cls.engine is None:
             raise Exception('Database not initialized.')
 
         if cls.connection_check_retries <= 0:
@@ -139,7 +148,9 @@ class DatabaseManager:
 
     @classmethod
     def _dispose_and_end_process(cls) -> None:
-        cls.engine.dispose()
+        if cls.engine is not None:
+            cls.engine.dispose()
+
         os.kill(os.getppid(), signal.SIGTERM)  # Aim uvicorn process
         os.kill(os.getpid(), signal.SIGTERM)
 
@@ -195,7 +206,7 @@ def get_db_connection():
         yield conn
 
 
-def get_db_engine() -> Engine:
+def get_db_engine() -> Engine | None:
     return database_manager.engine
 
 

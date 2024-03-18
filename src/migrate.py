@@ -151,6 +151,10 @@ def run() -> None:
     from database import get_db_engine
     engine = get_db_engine()
 
+    if engine is None:
+        print('Error: Could not run migrations.')
+        return
+
     run_migrations(ids, engine)
 
 
