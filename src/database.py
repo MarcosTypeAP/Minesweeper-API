@@ -76,7 +76,7 @@ class DatabaseManager:
             (url_parts.query.get('mode') == 'memory')
         )
 
-        if not is_tmp_db and url_parts.database is not None:
+        if not is_tmp_db and not url_parts.host and url_parts.database is not None:
             if not os.path.isfile(url_parts.database):
                 print(f'Error: {url_parts.database} does not exist.')
                 return None
