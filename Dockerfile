@@ -11,14 +11,12 @@ USER nonroot
 WORKDIR /app
 
 COPY --chown=nonroot:nonroot ./requirements.txt ./requirements.txt
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r ./requirements.txt \
+RUN pip install --no-warn-script-location --upgrade pip
+RUN pip install --no-warn-script-location --no-cache-dir -r ./requirements.txt \
 	&& rm ./requirements.txt
 
 COPY --chown=nonroot:nonroot . .
 
 RUN chmod u+x ./start.sh
-
-RUN mkdir -p ./db && touch ./db/db.dev.sql && chmod u+w ./db/db.dev.sql
 
 CMD ["./start.sh"]
