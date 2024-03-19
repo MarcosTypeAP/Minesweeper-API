@@ -65,6 +65,14 @@ These are all the variables that can be configured:
 | DATABASE_URL | Used to create the database engine | `sqlite+pysqlite:///:memory:` | `sqlite+pysqlite:///db/dev.db` |
 | DATABASE_CHECK_TABLE | The API will check that the specified table exists on startup or stop the process if it does not || `users` |
 
+### Build image
+
+If you are not using `docker-compose`, you must build the image manually:
+
+```bash
+docker build --tag minesweeper-api .
+```
+
 ### Local database
 
 If you configured the `DATABASE_URL` variable to point to a local file database, first you have to create a `volume` and the database file.
@@ -79,6 +87,8 @@ docker-compose run --rm api bash -c "touch db/dev.db && python3 src/migrate.py a
 or only `docker`:
 
 ```bash
+docker volume create minesweeper-api-db
+
 docker run --rm --tty \
     --env-file .env \
     --mount type=volume,src=minesweeper-api-db,dst=/app/db \
@@ -102,8 +112,6 @@ docker-compose up
 #### Docker
 
 ```bash
-docker build --tag minesweeper-api .
-
 docker run --rm --tty --interactive \
     --name minesweeper-api \
     --env-file .env \
