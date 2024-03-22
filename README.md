@@ -4,7 +4,7 @@ This API extends the functionality of the [Minesweeper client](https://github.co
 
 # Documentation
 
-The [documentation](https://minesweeper-api-production.up.railway.app/docs) is interactive and is automatically generated with Swagger from the source code, so it's always up-to-date.
+The [documentation](https://minesweeper-api.up.railway.app/docs) is interactive and is automatically generated with Swagger from the source code, so it's always up-to-date.
 
 # Installation
 
