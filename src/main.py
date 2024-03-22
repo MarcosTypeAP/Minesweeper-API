@@ -11,7 +11,7 @@ import settings
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     yield
 
-    if database_manager:
+    if database_manager.engine:
         database_manager.dispose()
 
 
