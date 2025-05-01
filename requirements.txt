@@ -13,3 +13,4 @@ python-jose==3.4.0
 SQLAlchemy==2.0.40
 sqlalchemy-libsql==0.1.0
 uvicorn==0.34.2
+setuptools==80.1.0

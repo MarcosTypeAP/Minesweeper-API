@@ -41,12 +41,6 @@ app = FastAPI(
     openapi_tags=tags_metadata
 )
 
-app.include_router(routers.auth, prefix='/api/auth')
-app.include_router(routers.users, prefix='/api/users')
-app.include_router(routers.games, prefix='/api/games')
-app.include_router(routers.times, prefix='/api/timerecords')
-app.include_router(routers.game_settings, prefix='/api/settings')
-
 origins: list[str] = []
 
 if settings.CLIENT_URL:
@@ -66,6 +60,12 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*']
 )
+
+app.include_router(routers.auth, prefix='/api/auth')
+app.include_router(routers.users, prefix='/api/users')
+app.include_router(routers.games, prefix='/api/games')
+app.include_router(routers.times, prefix='/api/timerecords')
+app.include_router(routers.game_settings, prefix='/api/settings')
 
 
 @app.get('/api/healthcheck', tags=['Health Check'], status_code=status.HTTP_200_OK)

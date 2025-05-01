@@ -23,7 +23,13 @@ def save_games_(db: DBConnection, user_id: int, games: Game | Sequence[Game]) ->
         'INSERT INTO games (user_id, difficulty, encoded_game, created_at) '
         'VALUES (:user_id, :difficulty, :encoded_game, :created_at);',
         [
-            {**game.model_dump(), 'user_id': user_id}
+            # {**game.model_dump(), 'user_id': user_id}
+            {
+                'user_id': user_id,
+                'difficulty': game.difficulty,
+                'encoded_game': game.encoded_game,
+                'created_at': game.created_at,
+            }
             for game in games
         ],
     )
@@ -34,7 +40,13 @@ def update_game(db: DBConnection, game_id: int, game: Game) -> None:
         'UPDATE games '
         'SET difficulty = :difficulty, encoded_game = :encoded_game, created_at = :created_at '
         'WHERE id = :game_id;',
-        {**game.model_dump(), 'game_id': game_id},
+        {
+            'game_id': game_id,
+            'difficulty': game.difficulty,
+            'encoded_game': game.encoded_game,
+            'created_at': game.created_at,
+        },
+        # **game.model_dump(),
     )
 
 

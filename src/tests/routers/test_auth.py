@@ -10,11 +10,11 @@ from routers.auth import (
     password_context,
     Tokens
 )
-from database import DBConnection
+from database import DBConnection, Params
 from freezegun import freeze_time
 from conftest import TestUser
 from datetime import datetime, timedelta, timezone
-from typing import Callable, Any
+from typing import Callable, Any, cast
 import functools
 import settings
 
@@ -268,7 +268,7 @@ def test_signup(client: TestClient, db: DBConnection) -> None:
         'SELECT id, username '
         'FROM users '
         'WHERE username = :username;',
-        credentials
+        cast(Params, credentials)
     )
 
     assert row is not None

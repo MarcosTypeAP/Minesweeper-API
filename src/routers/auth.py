@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Body, HTTPException, status, Depends, Query, Request, Response, Path
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.routing import APIRoute
+from libsql_client import InValue  # type: ignore[reportMissingTypeStubs]
 from pydantic import field_validator, Field, ValidationError
 from passlib.context import CryptContext
 from passlib.pwd import genword  # type: ignore
 from jose import jwt, JWTError
-from typing import Annotated, Any, Callable, Coroutine, Literal
+from typing import Annotated, Any, Callable, Coroutine, Literal, cast
 from models import User, FromDBModel, CamelModel
 from database import DBConnectionDep, DBConnection
 from utils import print_exception, get_json_error_resonse
@@ -401,21 +402,20 @@ def register_user(credentials: Annotated[SignUpCredentials, Body()], db: DBConne
         'SELECT id '
         'FROM users '
         'WHERE username = :username;',
-        credentials.model_dump()
+        {'username': credentials.username}
     )
 
     if row is not None:
         raise username_in_use_exception
 
     user = {
-        "username": credentials.username,
-        "password_hash": password_context.hash(credentials.password)
+        'username': credentials.username,
+        'password_hash': password_context.hash(credentials.password)
     }
-
     db.execute(
         'INSERT INTO users (username, password_hash) '
         'VALUES (:username, :password_hash);',
-        user,
+        cast(dict[str, InValue], user),
     )
 
     return User(**user)
@@ -447,7 +447,10 @@ def generate_tokens(
             'UPDATE users '
             'SET password_hash = :password_hash '
             'WHERE id = :id;',
-            db_user.model_dump(),
+            {
+                'password_hash': db_user.password_hash,
+                'id': db_user.id,
+            }
         )
 
     tokens, error_msg = generate_tokens_(db, db_user.id, device_id)

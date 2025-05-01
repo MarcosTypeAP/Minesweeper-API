@@ -29,7 +29,19 @@ def save_game_settings(db: DBConnection, user_id: int, game_settings: GameSettin
         '    :user_id, :theme, :initial_zoom, :action_toggle, :default_action, '
         '    :long_tap_delay, :easy_digging, :vibration, :vibration_intensity, :modified_at'
         ');',
-        {**game_settings.model_dump(), 'user_id': user_id},
+        {
+            'user_id': user_id,
+            'theme': game_settings.theme,
+            'initial_zoom': game_settings.initial_zoom,
+            'action_toggle': game_settings.action_toggle,
+            'default_action': game_settings.default_action,
+            'long_tap_delay': game_settings.long_tap_delay,
+            'easy_digging': game_settings.easy_digging,
+            'vibration': game_settings.vibration,
+            'vibration_intensity': game_settings.vibration_intensity,
+            'modified_at': game_settings.modified_at,
+        },
+        # {**game_settings.model_dump(), 'user_id': user_id},
     )
 
 
@@ -41,7 +53,19 @@ def update_game_settings(db: DBConnection, game_settings_id: int, game_settings:
         '    long_tap_delay = :long_tap_delay, easy_digging = :easy_digging, '
         '    vibration = :vibration, vibration_intensity = :vibration_intensity '
         'WHERE id = :game_settings_id;',
-        {**game_settings.model_dump(), 'game_settings_id': game_settings_id},
+        {
+            'game_settings_id': game_settings_id,
+            'theme': game_settings.theme,
+            'initial_zoom': game_settings.initial_zoom,
+            'action_toggle': game_settings.action_toggle,
+            'default_action': game_settings.default_action,
+            'long_tap_delay': game_settings.long_tap_delay,
+            'easy_digging': game_settings.easy_digging,
+            'vibration': game_settings.vibration,
+            'vibration_intensity': game_settings.vibration_intensity,
+            'modified_at': game_settings.modified_at,
+        },
+        # {**game_settings.model_dump(), 'game_settings_id': game_settings_id},
     )
 
 
