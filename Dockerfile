@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 python:3.10.13-alpine3.19
+FROM --platform=linux/amd64 python:3.12-alpine3.21
 
 ENV PYTHONUNBUFFERED=1
 
